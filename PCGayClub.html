@@ -300,9 +300,7 @@ function createModelControls() {
   `).join('');
 }
 
-// Настройка обработчиков событий
 function setupEventListeners() {
-  // RGB ползунки и поля ввода
   document.getElementById('rgb-r').addEventListener('input', function() {
     document.getElementById('rgb-r-num').value = this.value;
     updateRgbFromControls();
@@ -316,7 +314,6 @@ function setupEventListeners() {
     updateRgbFromControls();
   });
 
-  // RGB числовые поля
   document.getElementById('rgb-r-num').addEventListener('input', function() {
     document.getElementById('rgb-r').value = this.value;
     updateRgbFromControls();
@@ -330,7 +327,6 @@ function setupEventListeners() {
     updateRgbFromControls();
   });
 
-  // XYZ ползунки и поля ввода
   document.getElementById('xyz-x').addEventListener('input', function() {
     document.getElementById('xyz-x-num').value = this.value;
     updateXyzFromControls();
@@ -343,8 +339,7 @@ function setupEventListeners() {
     document.getElementById('xyz-z-num').value = this.value;
     updateXyzFromControls();
   });
-
-  // XYZ числовые поля
+  
   document.getElementById('xyz-x-num').addEventListener('input', function() {
     document.getElementById('xyz-x').value = this.value;
     updateXyzFromControls();
@@ -358,7 +353,6 @@ function setupEventListeners() {
     updateXyzFromControls();
   });
 
-  // Lab ползунки и поля ввода
   document.getElementById('lab-l').addEventListener('input', function() {
     document.getElementById('lab-l-num').value = this.value;
     updateLabFromControls();
@@ -372,7 +366,6 @@ function setupEventListeners() {
     updateLabFromControls();
   });
 
-  // Lab числовые поля
   document.getElementById('lab-l-num').addEventListener('input', function() {
     document.getElementById('lab-l').value = this.value;
     updateLabFromControls();
@@ -386,7 +379,6 @@ function setupEventListeners() {
     updateLabFromControls();
   });
 
-  // Color Picker и HEX input
   document.getElementById('colorPicker').addEventListener('input', function() {
     const hex = this.value;
     document.getElementById('hexInput').value = hex;
@@ -395,29 +387,25 @@ function setupEventListeners() {
 
   document.getElementById('hexInput').addEventListener('input', function() {
     let hex = this.value;
-    // Добавляем # если его нет
     if (!hex.startsWith('#')) {
       hex = '#' + hex;
       this.value = hex;
     }
-    // Проверяем формат HEX
     if (/^#[0-9A-F]{6}$/i.test(hex)) {
       document.getElementById('colorPicker').value = hex;
       updateFromHex(hex);
     }
   });
 
-  // Обработчики для клавиши Enter в числовых полях
   const numberInputs = document.querySelectorAll('input[type="number"]');
   numberInputs.forEach(input => {
     input.addEventListener('keypress', function(e) {
       if (e.key === 'Enter') {
-        this.blur(); // Снимаем фокус для применения изменений
+        this.blur(); 
       }
     });
   });
 
-  // Кнопка копирования HEX
   document.getElementById('copyHex').addEventListener('click', function() {
     const hex = document.getElementById('hexInput').value;
     navigator.clipboard.writeText(hex).then(() => {
@@ -430,7 +418,6 @@ function setupEventListeners() {
   });
 }
 
-// Функции обновления из элементов управления
 function updateRgbFromControls() {
   currentColor.rgb = {
     r: Math.max(0, Math.min(255, parseInt(document.getElementById('rgb-r').value) || 0)),
@@ -458,9 +445,7 @@ function updateLabFromControls() {
   updateFromLab();
 }
 
-// Обновление всех отображений
 function updateAllDisplays() {
-  // Обновление ползунков и числовых полей
   updateControl('rgb', 'r', currentColor.rgb.r, 0);
   updateControl('rgb', 'g', currentColor.rgb.g, 0);
   updateControl('rgb', 'b', currentColor.rgb.b, 0);
@@ -473,7 +458,6 @@ function updateAllDisplays() {
   updateControl('lab', 'a', currentColor.lab.a, 2);
   updateControl('lab', 'b', currentColor.lab.b, 2);
   
-  // Обновление HEX и цветового образца
   const hex = rgbToHex(currentColor.rgb.r, currentColor.rgb.g, currentColor.rgb.b);
   document.getElementById('hexInput').value = hex;
   document.getElementById('colorPicker').value = hex;
@@ -482,23 +466,19 @@ function updateAllDisplays() {
   swatch.textContent = hex;
   swatch.style.backgroundColor = hex;
   
-  // Обновление предупреждения если цвет вне sRGB
   updateWarnings();
 }
 
-// Функция для обновления предупреждений
 function updateWarnings() {
   const warn = document.getElementById('warn');
   const { r, g, b } = currentColor.rgb;
   
   let warnings = [];
   
-  // Проверка на выход за границы RGB
   if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255) {
     warnings.push('Цвет вне sRGB gamut!');
   }
   
-  // Проверка на недопустимые значения в Lab
   const { l, a, b: labB } = currentColor.lab;
   if (l < 0 || l > 100) {
     warnings.push('L* должен быть в диапазоне 0-100');
@@ -508,7 +488,6 @@ function updateWarnings() {
   warn.style.display = warnings.length > 0 ? 'block' : 'none';
 }
 
-// Вспомогательная функция для безопасного парсинга чисел
 function safeParseFloat(value, defaultValue = 0) {
   const parsed = parseFloat(value);
   return isNaN(parsed) ? defaultValue : parsed;
@@ -714,5 +693,6 @@ function rgbToHex(r, g, b) {
   </script>
 
 </body>
+
 
 </html>
