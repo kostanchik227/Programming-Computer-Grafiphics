@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Обработка изображений</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #333;
+            text-align: center;
+        }
+        .controls {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        .image-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .image-box {
+            flex: 1;
+            min-width: 300px;
+            text-align: center;
+        }
+        canvas {
+            max-width: 100%;
+            max-height: 400px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .histogram-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .histogram-box {
+            flex: 1;
+            min-width: 300px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        input[type="range"] {
+            width: 200px;
+            margin: 0 10px;
+        }
+        .slider-container {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        label {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .comparison {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+        }
+        .method-comparison {
+            text-align: center;
+            margin: 10px;
+        }
+        .warning {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Лабораторная работа 2: Обработка цифровых изображений</h1>
+        
+        <div class="controls">
+            <input type="file" id="imageInput" accept="image/*">
+            <button onclick="loadImage()">Загрузить изображение</button>
+            <button onclick="resetImage()">Сбросить</button>
+            <div id="fileWarning" class="warning"></div>
+        </div>
+
+        <div class="image-container">
+            <div class="image-box">
+                <h3>Исходное изображение</h3>
+                <canvas id="originalCanvas"></canvas>
+            </div>
+            <div class="image-box">
+                <h3>Обработанное изображение</h3>
+                <canvas id="processedCanvas"></canvas>
+            </div>
+        </div>
+
+        <div class="controls">
+            <h2>Увеличение резкости (Высокочастотные фильтры)</h2>
+            <div class="slider-container">
+                <label for="sharpness">Интенсивность резкости:</label>
+                <input type="range" id="sharpness" min="0" max="200" value="50">
+                <span id="sharpnessValue">50%</span>
+            </div>
+            <button onclick="applySharpening()">Применить увеличение резкости</button>
+        </div>
+
+        <div class="controls">
+            <h2>Контрастирование и гистограммы</h2>
+            <button onclick="applyLinearContrast()">Линейное контрастирование</button>
+            <button onclick="applyHistogramEqualizationRGB()">Эквализация гистограммы (RGB)</button>
+            <button onclick="applyHistogramEqualizationHSV()">Эквализация гистограммы (HSV)</button>
+        </div>
+
+        <div class="histogram-container">
+            <div class="histogram-box">
+                <h3>Гистограмма исходного изображения</h3>
+                <canvas id="originalHistogram"></canvas>
+            </div>
+            <div class="histogram-box">
+                <h3>Гистограмма обработанного изображения</h3>
+                <canvas id="processedHistogram"></canvas>
+            </div>
+        </div>
+
+        <div class="comparison">
+            <div class="method-comparison">
+                <h4>Линейное контрастирование</h4>
+                <canvas id="linearContrastCanvas" width="200" height="150"></canvas>
+            </div>
+            <div class="method-comparison">
+                <h4>Эквализация гистограммы</h4>
+                <canvas id="equalizationCanvas" width="200" height="150"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let originalImage = null;
+        const originalCanvas = document.getElementById('originalCanvas');
+        const processedCanvas = document.getElementById('processedCanvas');
+        const originalHistogram = document.getElementById('originalHistogram');
+        const processedHistogram = document.getElementById('processedHistogram');
+        const linearContrastCanvas = document.getElementById('linearContrastCanvas');
+        const equalizationCanvas = document.getElementById('equalizationCanvas');
+        const sharpnessSlider = document.getElementById('sharpness');
+        const sharpnessValue = document.getElementById('sharpnessValue');
+        const fileWarning = document.getElementById('fileWarning');
+
+        sharpnessSlider.addEventListener('input', function() {
+            sharpnessValue.textContent = this.value + '%';
+        });
+
+        function loadImage() {
+            const fileInput = document.getElementById('imageInput');
+            const file = fileInput.files[0];
+            fileWarning.textContent = '';
+            
+            if (!file) {
+                fileWarning.textContent = 'Выберите изображение для загрузки!';
+                return;
+            }
+            
+            if (!file.type.startsWith('image/')) {
+                fileWarning.textContent = 'Выберите файл изображения!';
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    originalImage = img;
+                    const maxWidth = 600;
+                    const scale = Math.min(1, maxWidth / img.width);
+                    const canvasWidth = img.width * scale;
+                    const canvasHeight = img.height * scale;
+                    
+                    drawImageToCanvas(img, originalCanvas, canvasWidth, canvasHeight);
+                    drawImageToCanvas(img, processedCanvas, canvasWidth, canvasHeight);
+                    drawHistogram(originalCanvas, originalHistogram);
+                    drawHistogram(processedCanvas, processedHistogram);
+                };
+                img.onerror = function() {
+                    fileWarning.textContent = 'Ошибка загрузки изображения!';
+                };
+                img.src = e.target.result;
+            };
+            reader.onerror = function() {
+                fileWarning.textContent = 'Ошибка чтения файла!';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function resetImage() {
+            if (originalImage) {
+                const ctx = processedCanvas.getContext('2d');
+                ctx.drawImage(originalImage, 0, 0, processedCanvas.width, processedCanvas.height);
+                drawHistogram(processedCanvas, processedHistogram);
+            }
+        }
+
+        function drawImageToCanvas(image, canvas, width, height) {
+            const ctx = canvas.getContext('2d');
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(image, 0, 0, width, height);
+        }
+
+        function applySharpening() {
+            if (!originalImage) return;
+            
+            const intensity = parseInt(sharpnessSlider.value) / 100;
+            const ctx = processedCanvas.getContext('2d');
+            const imageData = ctx.getImageData(0, 0, processedCanvas.width, processedCanvas.height);
+            const data = imageData.data;
+            
+            const sharpenedData = sharpenFilter(data, processedCanvas.width, processedCanvas.height, intensity);
+            
+            for (let i = 0; i < data.length; i++) {
+                data[i] = sharpenedData[i];
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+            drawHistogram(processedCanvas, processedHistogram);
+        }
+
+        function sharpenFilter(data, width, height, intensity) {
+            const kernel = [
+                -1, -1, -1,
+                -1,  9, -1,
+                -1, -1, -1
+            ];
+            
+            const result = new Uint8ClampedArray(data.length);
+            const kernelSize = 3;
+            const kernelRadius = 1;
+            
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    for (let c = 0; c < 3; c++) {
+                        let sum = 0;
+                        
+                        for (let ky = -kernelRadius; ky <= kernelRadius; ky++) {
+                            for (let kx = -kernelRadius; kx <= kernelRadius; kx++) {
+                                const pixelY = Math.min(Math.max(y + ky, 0), height - 1);
+                                const pixelX = Math.min(Math.max(x + kx, 0), width - 1);
+                                const kernelIndex = (ky + kernelRadius) * kernelSize + (kx + kernelRadius);
+                                const pixelIndex = (pixelY * width + pixelX) * 4 + c;
+                                
+                                sum += data[pixelIndex] * kernel[kernelIndex] * intensity;
+                            }
+                        }
+                        
+                        const originalIndex = (y * width + x) * 4 + c;
+                        const originalValue = data[originalIndex];
+                        let newValue = originalValue + sum;
+                        newValue = Math.max(0, Math.min(255, Math.round(newValue)));
+                        result[originalIndex] = newValue;
+                    }
+                    result[(y * width + x) * 4 + 3] = data[(y * width + x) * 4 + 3];
+                }
+            }
+            
+            return result;
+        }
+
+        function applyLinearContrast() {
+            if (!originalImage) return;
+            
+            const ctx = processedCanvas.getContext('2d');
+            const imageData = ctx.getImageData(0, 0, processedCanvas.width, processedCanvas.height);
+            const data = imageData.data;
+            
+            let minR = 255, maxR = 0;
+            let minG = 255, maxG = 0;
+            let minB = 255, maxB = 0;
+            
+            for (let i = 0; i < data.length; i += 4) {
+                minR = Math.min(minR, data[i]);
+                maxR = Math.max(maxR, data[i]);
+                minG = Math.min(minG, data[i + 1]);
+                maxG = Math.max(maxG, data[i + 1]);
+                minB = Math.min(minB, data[i + 2]);
+                maxB = Math.max(maxB, data[i + 2]);
+            }
+            
+            for (let i = 0; i < data.length; i += 4) {
+                data[i] = Math.round(((data[i] - minR) * 255) / (maxR - minR));
+                data[i + 1] = Math.round(((data[i + 1] - minG) * 255) / (maxG - minG));
+                data[i + 2] = Math.round(((data[i + 2] - minB) * 255) / (maxB - minB));
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+            drawHistogram(processedCanvas, processedHistogram);
+            drawLinearContrastGraph(minR, maxR);
+        }
+
+        function applyHistogramEqualizationRGB() {
+            if (!originalImage) return;
+            
+            const ctx = processedCanvas.getContext('2d');
+            const imageData = ctx.getImageData(0, 0, processedCanvas.width, processedCanvas.height);
+            const data = imageData.data;
+            const totalPixels = processedCanvas.width * processedCanvas.height;
+            
+            const histR = new Array(256).fill(0);
+            const histG = new Array(256).fill(0);
+            const histB = new Array(256).fill(0);
+            
+            for (let i = 0; i < data.length; i += 4) {
+                histR[data[i]]++;
+                histG[data[i + 1]]++;
+                histB[data[i + 2]]++;
+            }
+            
+            const cdfR = calculateCDF(histR, totalPixels);
+            const cdfG = calculateCDF(histG, totalPixels);
+            const cdfB = calculateCDF(histB, totalPixels);
+            
+            for (let i = 0; i < data.length; i += 4) {
+                data[i] = cdfR[data[i]];
+                data[i + 1] = cdfG[data[i + 1]];
+                data[i + 2] = cdfB[data[i + 2]];
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+            drawHistogram(processedCanvas, processedHistogram);
+            drawEqualizationGraph(cdfR);
+        }
+
+        function applyHistogramEqualizationHSV() {
+            if (!originalImage) return;
+            
+            const ctx = processedCanvas.getContext('2d');
+            const imageData = ctx.getImageData(0, 0, processedCanvas.width, processedCanvas.height);
+            const data = imageData.data;
+            const totalPixels = processedCanvas.width * processedCanvas.height;
+            
+            const vValues = new Array(totalPixels);
+            const hsvPixels = new Array(totalPixels);
+            
+            for (let i = 0, pixelIndex = 0; i < data.length; i += 4, pixelIndex++) {
+                const r = data[i] / 255;
+                const g = data[i + 1] / 255;
+                const b = data[i + 2] / 255;
+                
+                const max = Math.max(r, g, b);
+                const min = Math.min(r, g, b);
+                const delta = max - min;
+                
+                let h = 0, s = 0, v = max;
+                
+                if (delta !== 0) {
+                    s = delta / max;
+                    
+                    if (max === r) {
+                        h = ((g - b) / delta) % 6;
+                    } else if (max === g) {
+                        h = (b - r) / delta + 2;
+                    } else {
+                        h = (r - g) / delta + 4;
+                    }
+                    
+                    h = Math.round(h * 60);
+                    if (h < 0) h += 360;
+                }
+                
+                hsvPixels[pixelIndex] = { h, s, v };
+                vValues[pixelIndex] = Math.round(v * 255);
+            }
+            
+            const histV = new Array(256).fill(0);
+            vValues.forEach(val => histV[val]++);
+            
+            const cdfV = calculateCDF(histV, totalPixels);
+            
+            for (let i = 0, pixelIndex = 0; i < data.length; i += 4, pixelIndex++) {
+                const { h, s, v } = hsvPixels[pixelIndex];
+                const newV = cdfV[vValues[pixelIndex]] / 255;
+                
+                const hi = Math.floor(h / 60) % 6;
+                const f = h / 60 - hi;
+                const p = newV * (1 - s);
+                const q = newV * (1 - f * s);
+                const t = newV * (1 - (1 - f) * s);
+                
+                let r, g, b;
+                
+                switch (hi) {
+                    case 0: r = newV; g = t; b = p; break;
+                    case 1: r = q; g = newV; b = p; break;
+                    case 2: r = p; g = newV; b = t; break;
+                    case 3: r = p; g = q; b = newV; break;
+                    case 4: r = t; g = p; b = newV; break;
+                    case 5: r = newV; g = p; b = q; break;
+                }
+                
+                data[i] = Math.round(r * 255);
+                data[i + 1] = Math.round(g * 255);
+                data[i + 2] = Math.round(b * 255);
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+            drawHistogram(processedCanvas, processedHistogram);
+            drawEqualizationGraph(cdfV);
+        }
+
+        function calculateCDF(histogram, totalPixels) {
+            const cdf = new Array(256);
+            cdf[0] = histogram[0];
+            
+            for (let i = 1; i < 256; i++) {
+                cdf[i] = cdf[i - 1] + histogram[i];
+            }
+            
+            const cdfMin = cdf.find(val => val > 0) || 0;
+            
+            for (let i = 0; i < 256; i++) {
+                cdf[i] = Math.round(((cdf[i] - cdfMin) / (totalPixels - cdfMin)) * 255);
+            }
+            
+            return cdf;
+        }
+
+        function drawHistogram(canvas, histogramCanvas) {
+            const ctx = canvas.getContext('2d');
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            
+            const histR = new Array(256).fill(0);
+            const histG = new Array(256).fill(0);
+            const histB = new Array(256).fill(0);
+            
+            for (let i = 0; i < data.length; i += 4) {
+                histR[data[i]]++;
+                histG[data[i + 1]]++;
+                histB[data[i + 2]]++;
+            }
+            
+            const maxFreq = Math.max(...histR, ...histG, ...histB);
+            
+            histogramCanvas.width = 300;
+            histogramCanvas.height = 200;
+            const histCtx = histogramCanvas.getContext('2d');
+            
+            histCtx.clearRect(0, 0, histogramCanvas.width, histogramCanvas.height);
+            histCtx.fillStyle = '#f8f9fa';
+            histCtx.fillRect(0, 0, histogramCanvas.width, histogramCanvas.height);
+            
+            const barWidth = histogramCanvas.width / 256;
+            
+            for (let i = 0; i < 256; i++) {
+                const heightR = (histR[i] / maxFreq) * histogramCanvas.height;
+                const heightG = (histG[i] / maxFreq) * histogramCanvas.height;
+                const heightB = (histB[i] / maxFreq) * histogramCanvas.height;
+                
+                histCtx.fillStyle = '#ff4444';
+                histCtx.fillRect(i * barWidth, histogramCanvas.height - heightR, barWidth, heightR);
+                
+                histCtx.fillStyle = '#44ff44';
+                histCtx.fillRect(i * barWidth, histogramCanvas.height - heightG, barWidth, heightG);
+                
+                histCtx.fillStyle = '#4444ff';
+                histCtx.fillRect(i * barWidth, histogramCanvas.height - heightB, barWidth, heightB);
+            }
+        }
+
+        function drawLinearContrastGraph(min, max) {
+            const ctx = linearContrastCanvas.getContext('2d');
+            ctx.clearRect(0, 0, linearContrastCanvas.width, linearContrastCanvas.height);
+            
+            ctx.fillStyle = '#f8f9fa';
+            ctx.fillRect(0, 0, linearContrastCanvas.width, linearContrastCanvas.height);
+            
+            ctx.beginPath();
+            ctx.moveTo(20, linearContrastCanvas.height - 20);
+            ctx.lineTo(linearContrastCanvas.width - 20, 20);
+            ctx.strokeStyle = '#007bff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            ctx.font = "12px Arial";
+            ctx.fillStyle = '#333';
+            ctx.fillText(`Min: ${min}`, 10, 20);
+            ctx.fillText(`Max: ${max}`, 10, 40);
+        }
+
+        function drawEqualizationGraph(cdf) {
+            const ctx = equalizationCanvas.getContext('2d');
+            ctx.clearRect(0, 0, equalizationCanvas.width, equalizationCanvas.height);
+            
+            ctx.fillStyle = '#f8f9fa';
+            ctx.fillRect(0, 0, equalizationCanvas.width, equalizationCanvas.height);
+            
+            ctx.beginPath();
+            ctx.moveTo(20, equalizationCanvas.height - 20);
+            
+            for (let i = 0; i < 256; i++) {
+                const x = 20 + (i / 255) * (equalizationCanvas.width - 40);
+                const y = equalizationCanvas.height - 20 - (cdf[i] / 255) * (equalizationCanvas.height - 40);
+                ctx.lineTo(x, y);
+            }
+            
+            ctx.strokeStyle = '#28a745';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+    </script>
+</body>
+</html>
