@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Лабораторная работа 6a-6c</title>
+    <style>
+        body {
+            margin: 20px;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .panel {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        h1, h3 {
+            color: #333;
+            margin-top: 0;
+        }
+        .canvas-container {
+            position: relative;
+            border: 2px solid #333;
+            background: #fff;
+            margin-bottom: 15px;
+        }
+        canvas {
+            display: block;
+        }
+        .axis-label {
+            position: absolute;
+            font-weight: bold;
+            color: #333;
+        }
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .control-group {
+            background: #f9f9f9;
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 4px solid #4CAF50;
+        }
+        .control-group.blue {
+            border-left-color: #2196F3;
+        }
+        .control-group.purple {
+            border-left-color: #9C27B0;
+        }
+        label {
+            display: block;
+            margin: 8px 0 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="range"] {
+            width: 100%;
+            margin: 5px 0;
+        }
+        .value-display {
+            display: inline-block;
+            min-width: 40px;
+            text-align: right;
+            font-weight: bold;
+            color: #2196F3;
+        }
+        .button-group {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            flex: 1;
+            padding: 10px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        button.reset {
+            background: #f44336;
+        }
+        .matrix {
+            font-family: monospace;
+            background: #333;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+            line-height: 1.5;
+            overflow-x: auto;
+        }
+        .projections {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+        .projection {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Лабораторная работа 6a-6c: 3D модель буквы "И"</h1>
+    
+    <div class="container">
+        <div class="panel" style="grid-column: 1 / -1;">
+            <h3>Основной 3D вид</h3>
+            <div class="canvas-container" style="height: 400px;">
+                <canvas id="mainCanvas" width="800" height="400"></canvas>
+                <div class="axis-label" id="xAxisLabel">+X</div>
+                <div class="axis-label" id="yAxisLabel">+Y</div>
+                <div class="axis-label" id="zAxisLabel">+Z</div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h3>Управление преобразованиями</h3>
+            <div class="controls-grid">
+                <div class="control-group">
+                    <h4>Масштабирование</h4>
+                    <label>X: <span class="value-display" id="scaleXVal">1.00</span></label>
+                    <input type="range" id="scaleX" min="0.1" max="3" step="0.1" value="1">
+                    
+                    <label>Y: <span class="value-display" id="scaleYVal">1.00</span></label>
+                    <input type="range" id="scaleY" min="0.1" max="3" step="0.1" value="1">
+                    
+                    <label>Z: <span class="value-display" id="scaleZVal">1.00</span></label>
+                    <input type="range" id="scaleZ" min="0.1" max="3" step="0.1" value="1">
+                </div>
+
+                <div class="control-group blue">
+                    <h4>Перенос</h4>
+                    <label>X: <span class="value-display" id="translateXVal">0</span></label>
+                    <input type="range" id="translateX" min="-200" max="200" step="1" value="0">
+                    
+                    <label>Y: <span class="value-display" id="translateYVal">0</span></label>
+                    <input type="range" id="translateY" min="-200" max="200" step="1" value="0">
+                    
+                    <label>Z: <span class="value-display" id="translateZVal">0</span></label>
+                    <input type="range" id="translateZ" min="-200" max="200" step="1" value="0">
+                </div>
+
+                <div class="control-group purple">
+                    <h4>Вращение (ось X)</h4>
+                    <label>Угол: <span class="value-display" id="rotateXVal">0°</span></label>
+                    <input type="range" id="rotateX" min="0" max="360" step="1" value="0">
+                </div>
+
+                <div class="control-group purple">
+                    <h4>Вращение (ось Y)</h4>
+                    <label>Угол: <span class="value-display" id="rotateYVal">0°</span></label>
+                    <input type="range" id="rotateY" min="0" max="360" step="1" value="0">
+                </div>
+
+                <div class="control-group purple">
+                    <h4>Вращение (ось Z)</h4>
+                    <label>Угол: <span class="value-display" id="rotateZVal">0°</span></label>
+                    <input type="range" id="rotateZ" min="0" max="360" step="1" value="0">
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button id="resetBtn" class="reset">Сброс</button>
+                <button id="randomBtn">Случайное положение</button>
+            </div>
+
+            <h3>Матрица преобразования</h3>
+            <div class="matrix" id="matrixOutput">
+                Инициализация...
+            </div>
+        </div>
+
+        <div class="panel">
+            <h3>Ортографические проекции</h3>
+            <div class="projections">
+                <div class="projection">
+                    <h4>OXY (вид сверху)</h4>
+                    <div class="canvas-container">
+                        <canvas id="oxyCanvas" width="250" height="250"></canvas>
+                    </div>
+                </div>
+                <div class="projection">
+                    <h4>OXZ (вид спереди)</h4>
+                    <div class="canvas-container">
+                        <canvas id="oxzCanvas" width="250" height="250"></canvas>
+                    </div>
+                </div>
+                <div class="projection">
+                    <h4>OYZ (вид сбоку)</h4>
+                    <div class="canvas-container">
+                        <canvas id="oyzCanvas" width="250" height="250"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class Vector3 {
+            constructor(x, y, z) {
+                this.x = x;
+                this.y = y;
+                this.z = z;
+            }
+            transform(matrix) {
+                const [x, y, z] = [this.x, this.y, this.z];
+                this.x = matrix[0]*x + matrix[4]*y + matrix[8]*z + matrix[12];
+                this.y = matrix[1]*x + matrix[5]*y + matrix[9]*z + matrix[13];
+                this.z = matrix[2]*x + matrix[6]*y + matrix[10]*z + matrix[14];
+            }
+            clone() {
+                return new Vector3(this.x, this.y, this.z);
+            }
+        }
+
+        class Letter3D {
+            constructor() {
+                this.vertices = [
+                    new Vector3(0, 0, 0),
+                    new Vector3(0, 100, 0),
+                    new Vector3(50, 100, 0),
+                    new Vector3(50, 40, 0),
+                    new Vector3(100, 100, 0),
+                    new Vector3(150, 100, 0),
+                    new Vector3(150, 0, 0),
+                    new Vector3(100, 0, 0),
+                    new Vector3(100, 60, 0),
+                    new Vector3(50, 0, 0),
+                    new Vector3(0, 0, 50),
+                    new Vector3(0, 100, 50),
+                    new Vector3(50, 100, 50),
+                    new Vector3(50, 40, 50),
+                    new Vector3(100, 100, 50),
+                    new Vector3(150, 100, 50),
+                    new Vector3(150, 0, 50),
+                    new Vector3(100, 0, 50),
+                    new Vector3(100, 60, 50),
+                    new Vector3(50, 0, 50)
+                ];
+                this.edges = [
+                    [0,1], [1,2], [2,3], [3,4], [4,5], [5,6], [6,7], [7,8], [8,9], [9,0],
+                    [10,11], [11,12], [12,13], [13,14], [14,15], [15,16], [16,17], [17,18], [18,19], [19,10],
+                    [0,10], [1,11], [2,12], [3,13], [4,14], [5,15], [6,16], [7,17], [8,18], [9,19]
+                ];
+                this.originalVertices = this.vertices.map(v => v.clone());
+            }
+            reset() {
+                this.vertices = this.originalVertices.map(v => v.clone());
+            }
+        }
+
+        class TransformationMatrix {
+            constructor() {
+                this.matrix = this.identity();
+            }
+            identity() {
+                return [
+                    1,0,0,0,
+                    0,1,0,0,
+                    0,0,1,0,
+                    0,0,0,1
+                ];
+            }
+            scale(sx, sy, sz) {
+                const m = this.identity();
+                m[0] = sx;
+                m[5] = sy;
+                m[10] = sz;
+                this.multiply(m);
+            }
+            translate(tx, ty, tz) {
+                const m = this.identity();
+                m[12] = tx;
+                m[13] = ty;
+                m[14] = tz;
+                this.multiply(m);
+            }
+            rotateX(angle) {
+                const rad = angle * Math.PI / 180;
+                const c = Math.cos(rad);
+                const s = Math.sin(rad);
+                const m = this.identity();
+                m[5] = c;
+                m[6] = s;
+                m[9] = -s;
+                m[10] = c;
+                this.multiply(m);
+            }
+            rotateY(angle) {
+                const rad = angle * Math.PI / 180;
+                const c = Math.cos(rad);
+                const s = Math.sin(rad);
+                const m = this.identity();
+                m[0] = c;
+                m[2] = -s;
+                m[8] = s;
+                m[10] = c;
+                this.multiply(m);
+            }
+            rotateZ(angle) {
+                const rad = angle * Math.PI / 180;
+                const c = Math.cos(rad);
+                const s = Math.sin(rad);
+                const m = this.identity();
+                m[0] = c;
+                m[1] = s;
+                m[4] = -s;
+                m[5] = c;
+                this.multiply(m);
+            }
+            multiply(b) {
+                const a = this.matrix;
+                const result = [];
+                for (let i = 0; i < 4; i++) {
+                    for (let j = 0; j < 4; j++) {
+                        let sum = 0;
+                        for (let k = 0; k < 4; k++) {
+                            sum += a[i*4 + k] * b[k*4 + j];
+                        }
+                        result[i*4 + j] = sum;
+                    }
+                }
+                this.matrix = result;
+            }
+            toString() {
+                const m = this.matrix;
+                return `
+${m[0].toFixed(2)}  ${m[4].toFixed(2)}  ${m[8].toFixed(2)}  ${m[12].toFixed(2)}
+${m[1].toFixed(2)}  ${m[5].toFixed(2)}  ${m[9].toFixed(2)}  ${m[13].toFixed(2)}
+${m[2].toFixed(2)}  ${m[6].toFixed(2)}  ${m[10].toFixed(2)}  ${m[14].toFixed(2)}
+${m[3].toFixed(2)}  ${m[7].toFixed(2)}  ${m[11].toFixed(2)}  ${m[15].toFixed(2)}
+                `.trim();
+            }
+        }
+
+        class Renderer {
+            constructor(canvasId) {
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas.getContext('2d');
+                this.width = this.canvas.width;
+                this.height = this.canvas.height;
+                this.centerX = this.width / 2;
+                this.centerY = this.height / 2;
+                this.scale3D = 1.2;
+                this.axisLength = 100;
+            }
+            clear() {
+                this.ctx.clearRect(0, 0, this.width, this.height);
+                this.drawAxes();
+            }
+            drawAxes() {
+                const ctx = this.ctx;
+                ctx.save();
+                
+                if (this.canvas.id === 'mainCanvas') {
+                    const origin = this.project3DPoint(0, 0, 0);
+                    const xEnd = this.project3DPoint(this.axisLength, 0, 0);
+                    const yEnd = this.project3DPoint(0, this.axisLength, 0);
+                    const zEnd = this.project3DPoint(0, 0, this.axisLength);
+                    
+                    ctx.strokeStyle = '#FF0000';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(origin.x, origin.y);
+                    ctx.lineTo(xEnd.x, xEnd.y);
+                    ctx.stroke();
+                    
+                    ctx.strokeStyle = '#00FF00';
+                    ctx.beginPath();
+                    ctx.moveTo(origin.x, origin.y);
+                    ctx.lineTo(yEnd.x, yEnd.y);
+                    ctx.stroke();
+                    
+                    ctx.strokeStyle = '#0000FF';
+                    ctx.beginPath();
+                    ctx.moveTo(origin.x, origin.y);
+                    ctx.lineTo(zEnd.x, zEnd.y);
+                    ctx.stroke();
+                    
+                    ctx.fillStyle = '#FF0000';
+                    ctx.font = 'bold 14px Arial';
+                    ctx.fillText('X', xEnd.x + 5, xEnd.y + 5);
+                    
+                    ctx.fillStyle = '#00FF00';
+                    ctx.fillText('Y', yEnd.x + 5, yEnd.y - 10);
+                    
+                    ctx.fillStyle = '#0000FF';
+                    ctx.fillText('Z', zEnd.x - 5, zEnd.y - 10);
+                } else {
+                    ctx.strokeStyle = '#333';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(this.centerX, 20);
+                    ctx.lineTo(this.centerX, this.height-20);
+                    ctx.moveTo(20, this.centerY);
+                    ctx.lineTo(this.width-20, this.centerY);
+                    ctx.stroke();
+                    
+                    ctx.fillStyle = '#333';
+                    ctx.font = '12px Arial';
+                    
+                    if (this.canvas.id === 'oxyCanvas') {
+                        ctx.fillText('X', this.width-10, this.centerY-10);
+                        ctx.fillText('Y', this.centerX+10, 20);
+                    } else if (this.canvas.id === 'oxzCanvas') {
+                        ctx.fillText('X', this.width-10, this.centerY-10);
+                        ctx.fillText('Z', this.centerX+10, 20);
+                    } else if (this.canvas.id === 'oyzCanvas') {
+                        ctx.fillText('Y', this.width-10, this.centerY-10);
+                        ctx.fillText('Z', this.centerX+10, 20);
+                    }
+                }
+                ctx.restore();
+            }
+            project3DPoint(x, y, z) {
+                const projectedX = this.centerX + (x - z * 0.7) * this.scale3D;
+                const projectedY = this.centerY - (y - z * 0.7) * this.scale3D;
+                return {x: projectedX, y: projectedY};
+            }
+            projectTo2D(vertices, type='3D') {
+                const projected = [];
+                for (const v of vertices) {
+                    let x, y;
+                    switch(type) {
+                        case '3D':
+                            const projectedPoint = this.project3DPoint(v.x, v.y, v.z);
+                            x = projectedPoint.x;
+                            y = projectedPoint.y;
+                            break;
+                        case 'OXY':
+                            x = this.centerX + v.x * 1.5;
+                            y = this.centerY - v.y * 1.5;
+                            break;
+                        case 'OXZ':
+                            x = this.centerX + v.x * 1.5;
+                            y = this.centerY - v.z * 1.5;
+                            break;
+                        case 'OYZ':
+                            x = this.centerX + v.y * 1.5;
+                            y = this.centerY - v.z * 1.5;
+                            break;
+                    }
+                    projected.push({x, y});
+                }
+                return projected;
+            }
+            drawEdges(vertices, edges, color='#2196F3') {
+                const ctx = this.ctx;
+                ctx.save();
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                for (const [i, j] of edges) {
+                    const v1 = vertices[i];
+                    const v2 = vertices[j];
+                    ctx.moveTo(v1.x, v1.y);
+                    ctx.lineTo(v2.x, v2.y);
+                }
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        class App {
+            constructor() {
+                this.letter = new Letter3D();
+                this.mainRenderer = new Renderer('mainCanvas');
+                this.oxyRenderer = new Renderer('oxyCanvas');
+                this.oxzRenderer = new Renderer('oxzCanvas');
+                this.oyzRenderer = new Renderer('oyzCanvas');
+                
+                this.initControls();
+                this.reset();
+                this.render();
+            }
+            initControls() {
+                const ids = ['scaleX','scaleY','scaleZ','translateX','translateY','translateZ','rotateX','rotateY','rotateZ'];
+                ids.forEach(id => {
+                    const el = document.getElementById(id);
+                    el.addEventListener('input', () => {
+                        this.updateValueDisplay(id);
+                        this.applyTransformations();
+                    });
+                });
+                document.getElementById('resetBtn').addEventListener('click', () => this.reset());
+                document.getElementById('randomBtn').addEventListener('click', () => this.randomTransform());
+                this.updateAllValueDisplays();
+            }
+            updateValueDisplay(id) {
+                const el = document.getElementById(id);
+                const value = parseFloat(el.value);
+                const display = document.getElementById(id + 'Val');
+                if (id.includes('rotate')) {
+                    display.textContent = value + '°';
+                } else if (id.includes('scale')) {
+                    display.textContent = value.toFixed(2);
+                } else {
+                    display.textContent = value;
+                }
+            }
+            updateAllValueDisplays() {
+                ['scaleX','scaleY','scaleZ','translateX','translateY','translateZ','rotateX','rotateY','rotateZ'].forEach(id => {
+                    this.updateValueDisplay(id);
+                });
+            }
+            getControlValues() {
+                return {
+                    scaleX: parseFloat(document.getElementById('scaleX').value),
+                    scaleY: parseFloat(document.getElementById('scaleY').value),
+                    scaleZ: parseFloat(document.getElementById('scaleZ').value),
+                    translateX: parseFloat(document.getElementById('translateX').value),
+                    translateY: parseFloat(document.getElementById('translateY').value),
+                    translateZ: parseFloat(document.getElementById('translateZ').value),
+                    rotateX: parseFloat(document.getElementById('rotateX').value),
+                    rotateY: parseFloat(document.getElementById('rotateY').value),
+                    rotateZ: parseFloat(document.getElementById('rotateZ').value)
+                };
+            }
+            applyTransformations() {
+                const vals = this.getControlValues();
+                this.letter.reset();
+                
+                const tm = new TransformationMatrix();
+                tm.translate(vals.translateX, vals.translateY, vals.translateZ);
+                tm.rotateX(vals.rotateX);
+                tm.rotateY(vals.rotateY);
+                tm.rotateZ(vals.rotateZ);
+                tm.scale(vals.scaleX, vals.scaleY, vals.scaleZ);
+                
+                this.letter.vertices = this.letter.originalVertices.map(v => {
+                    const copy = v.clone();
+                    copy.transform(tm.matrix);
+                    return copy;
+                });
+                
+                document.getElementById('matrixOutput').textContent = tm.toString();
+                this.render();
+            }
+            reset() {
+                document.getElementById('scaleX').value = 1;
+                document.getElementById('scaleY').value = 1;
+                document.getElementById('scaleZ').value = 1;
+                document.getElementById('translateX').value = 0;
+                document.getElementById('translateY').value = 0;
+                document.getElementById('translateZ').value = 0;
+                document.getElementById('rotateX').value = 0;
+                document.getElementById('rotateY').value = 0;
+                document.getElementById('rotateZ').value = 0;
+                this.updateAllValueDisplays();
+                this.applyTransformations();
+            }
+            randomTransform() {
+                document.getElementById('scaleX').value = (Math.random() * 2 + 0.1).toFixed(1);
+                document.getElementById('scaleY').value = (Math.random() * 2 + 0.1).toFixed(1);
+                document.getElementById('scaleZ').value = (Math.random() * 2 + 0.1).toFixed(1);
+                document.getElementById('translateX').value = Math.floor(Math.random() * 400 - 200);
+                document.getElementById('translateY').value = Math.floor(Math.random() * 400 - 200);
+                document.getElementById('translateZ').value = Math.floor(Math.random() * 400 - 200);
+                document.getElementById('rotateX').value = Math.floor(Math.random() * 360);
+                document.getElementById('rotateY').value = Math.floor(Math.random() * 360);
+                document.getElementById('rotateZ').value = Math.floor(Math.random() * 360);
+                this.updateAllValueDisplays();
+                this.applyTransformations();
+            }
+            render() {
+                this.mainRenderer.clear();
+                this.oxyRenderer.clear();
+                this.oxzRenderer.clear();
+                this.oyzRenderer.clear();
+                
+                const vertices = this.letter.vertices;
+                
+                const mainProjected = this.mainRenderer.projectTo2D(vertices, '3D');
+                this.mainRenderer.drawEdges(mainProjected, this.letter.edges);
+                
+                const oxyProjected = this.oxyRenderer.projectTo2D(vertices, 'OXY');
+                this.oxyRenderer.drawEdges(oxyProjected, this.letter.edges, '#4CAF50');
+                
+                const oxzProjected = this.oxzRenderer.projectTo2D(vertices, 'OXZ');
+                this.oxzRenderer.drawEdges(oxzProjected, this.letter.edges, '#F44336');
+                
+                const oyzProjected = this.oyzRenderer.projectTo2D(vertices, 'OYZ');
+                this.oyzRenderer.drawEdges(oyzProjected, this.letter.edges, '#FF9800');
+            }
+        }
+
+        window.addEventListener('load', () => new App());
+    </script>
+</body>
+</html>
