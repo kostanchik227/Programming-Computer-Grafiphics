@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Лабораторная работа 4: Растровые алгоритмы</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    body {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #e6e6e6;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    header {
+      text-align: center;
+      padding: 20px;
+      margin-bottom: 30px;
+      border-bottom: 2px solid #4cc9f0;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 10px;
+    }
+    
+    h1 {
+      font-size: 2.2rem;
+      margin-bottom: 10px;
+      color: #4cc9f0;
+      text-shadow: 0 0 10px rgba(76, 201, 240, 0.5);
+    }
+    
+    h2 {
+      color: #72efdd;
+      margin-bottom: 15px;
+      font-size: 1.5rem;
+    }
+    
+    .subtitle {
+      font-size: 1.1rem;
+      color: #a9a9a9;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    .main-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-bottom: 30px;
+    }
+    
+    @media (max-width: 1100px) {
+      .main-content {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .controls-panel {
+      background: rgba(30, 30, 46, 0.8);
+      border-radius: 10px;
+      padding: 25px;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    }
+    
+    .algorithm-selector {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 25px;
+    }
+    
+    .algorithm-btn {
+      padding: 12px 8px;
+      background: #2d3047;
+      border: none;
+      border-radius: 6px;
+      color: #e6e6e6;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+    
+    .algorithm-btn:hover {
+      background: #3a3d5c;
+      transform: translateY(-2px);
+    }
+    
+    .algorithm-btn.active {
+      background: #4361ee;
+      box-shadow: 0 0 15px rgba(67, 97, 238, 0.5);
+    }
+    
+    .input-group {
+      margin-bottom: 20px;
+    }
+    
+    .input-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 15px;
+    }
+    
+    .coord-input {
+      width: 48%;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #72efdd;
+      font-weight: 500;
+    }
+    
+    input[type="number"],
+    select {
+      width: 100%;
+      padding: 12px 15px;
+      background: #1c1e32;
+      border: 1px solid #4a4e69;
+      border-radius: 6px;
+      color: #e6e6e6;
+      font-size: 1rem;
+    }
+    
+    input[type="number"]:focus,
+    select:focus {
+      outline: none;
+      border-color: #4361ee;
+      box-shadow: 0 0 10px rgba(67, 97, 238, 0.3);
+    }
+    
+    .slider-container {
+      margin-top: 5px;
+    }
+    
+    .slider-value {
+      text-align: center;
+      margin-top: 5px;
+      font-weight: bold;
+      color: #4cc9f0;
+    }
+    
+    .buttons-row {
+      display: flex;
+      gap: 15px;
+      margin-top: 25px;
+    }
+    
+    button {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .draw-btn {
+      background: #4361ee;
+      color: white;
+    }
+    
+    .draw-btn:hover {
+      background: #3a56d4;
+      box-shadow: 0 0 15px rgba(67, 97, 238, 0.5);
+    }
+    
+    .clear-btn {
+      background: #f72585;
+      color: white;
+    }
+    
+    .clear-btn:hover {
+      background: #e01e75;
+      box-shadow: 0 0 15px rgba(247, 37, 133, 0.5);
+    }
+    
+    .visualization-area {
+      background: rgba(30, 30, 46, 0.8);
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .canvas-container {
+      flex-grow: 1;
+      position: relative;
+      border: 1px solid #4a4e69;
+      border-radius: 6px;
+      overflow: hidden;
+      background-color: #0f111a;
+    }
+    
+    #canvas {
+      display: block;
+    }
+    
+    .coordinates-info {
+      margin-top: 15px;
+      font-size: 0.9rem;
+      color: #a9a9a9;
+      text-align: center;
+    }
+    
+    .results-panel {
+      background: rgba(30, 30, 46, 0.8);
+      border-radius: 10px;
+      padding: 25px;
+      margin-top: 30px;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    }
+    
+    .results-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+    }
+    
+    @media (max-width: 768px) {
+      .results-content {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .calculation-steps,
+    .performance {
+      background: rgba(44, 46, 72, 0.6);
+      padding: 20px;
+      border-radius: 8px;
+    }
+    
+    .performance-stats {
+      margin-top: 15px;
+    }
+    
+    .stat-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #4a4e69;
+    }
+    
+    .step-item {
+      margin-bottom: 10px;
+      padding: 8px;
+      background: rgba(26, 27, 43, 0.7);
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.9rem;
+    }
+    
+    .additional-info {
+      margin-top: 30px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+    }
+    
+    @media (max-width: 900px) {
+      .additional-info {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .info-box {
+      background: rgba(30, 30, 46, 0.8);
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    }
+    
+    .info-box h3 {
+      color: #72efdd;
+      margin-bottom: 15px;
+      font-size: 1.3rem;
+    }
+    
+    .color-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-top: 15px;
+    }
+    
+    .color-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .color-box {
+      width: 20px;
+      height: 20px;
+      border-radius: 3px;
+    }
+    
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #4a4e69;
+      color: #a9a9a9;
+      font-size: 0.9rem;
+    }
+    
+    .keyboard-shortcuts {
+      margin-top: 15px;
+      font-size: 0.85rem;
+    }
+    
+    .shortcut {
+      display: inline-block;
+      background: rgba(67, 97, 238, 0.2);
+      padding: 3px 8px;
+      border-radius: 4px;
+      margin: 0 5px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <h1>Лабораторная работа №4: Базовые растровые алгоритмы</h1>
+      <p class="subtitle">Иллюстрация работы базовых алгоритмов растеризации отрезков и кривых</p>
+    </header>
+
+    <div class="main-content">
+      <div class="controls-panel">
+        <h2>Управление и настройки</h2>
+
+        <div class="algorithm-selector">
+          <button class="algorithm-btn active" data-algorithm="step">Пошаговый алгоритм</button>
+          <button class="algorithm-btn" data-algorithm="dda">Алгоритм ЦДА</button>
+          <button class="algorithm-btn" data-algorithm="bresenham">Алгоритм Брезенхема (линия)</button>
+          <button class="algorithm-btn" data-algorithm="bresenham-circle">Алгоритм Брезенхема (окружность)</button>
+          <button class="algorithm-btn" data-algorithm="castle-pitway">Алгоритм Кастла-Питвея</button>
+          <button class="algorithm-btn" data-algorithm="wu">Сглаживание (Ву)</button>
+        </div>
+
+        <div class="input-group">
+          <div class="input-row">
+            <div class="coord-input">
+              <label for="x1">Начало X:</label>
+              <input type="number" id="x1" value="-50" min="-250" max="250">
+            </div>
+            <div class="coord-input">
+              <label for="y1">Начало Y:</label>
+              <input type="number" id="y1" value="30" min="-250" max="250">
+            </div>
+          </div>
+
+          <div class="input-row">
+            <div class="coord-input">
+              <label for="x2">Конец X / Центр X:</label>
+              <input type="number" id="x2" value="70" min="-250" max="250">
+            </div>
+            <div class="coord-input">
+              <label for="y2">Конец Y / Центр Y:</label>
+              <input type="number" id="y2" value="-40" min="-250" max="250">
+            </div>
+          </div>
+
+          <div class="input-row">
+            <div class="coord-input">
+              <label for="radius">Радиус (для окружности):</label>
+              <input type="number" id="radius" value="60" min="1" max="200">
+            </div>
+            <div class="coord-input">
+              <label for="curve-points">Точек кривой:</label>
+              <select id="curve-points">
+                <option value="3">3 точки</option>
+                <option value="4">4 точки</option>
+                <option value="5">5 точек</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="scale">Масштаб: <span id="scale-value">10</span>px на единицу</label>
+          <div class="slider-container">
+            <input type="range" id="scale" min="5" max="20" value="10" step="1">
+          </div>
+
+          <label for="grid-size">Размер сетки: <span id="grid-value">10</span> единиц</label>
+          <div class="slider-container">
+            <input type="range" id="grid-size" min="5" max="50" value="10" step="5">
+          </div>
+        </div>
+
+        <div class="buttons-row">
+          <button class="draw-btn" id="draw-btn">Построить</button>
+          <button class="clear-btn" id="clear-btn">Очистить</button>
+        </div>
+      </div>
+
+      <div class="visualization-area">
+        <h2>Визуализация</h2>
+        <div class="canvas-container">
+          <canvas id="canvas" width="600" height="600"></canvas>
+        </div>
+        <p class="coordinates-info">Целочисленные координаты привязаны к узлам сетки. Центр координат находится в центре холста.</p>
+      </div>
+    </div>
+
+    <div class="results-panel">
+      <h2>Результаты и вычисления</h2>
+      <div class="results-content">
+        <div class="calculation-steps">
+          <h3>Шаги алгоритма</h3>
+          <div id="steps-container">
+            <div class="step-item">Выберите алгоритм и нажмите "Построить"</div>
+          </div>
+        </div>
+
+        <div class="performance">
+          <h3>Временные характеристики</h3>
+          <div class="performance-stats" id="performance-stats">
+            <div class="stat-item">
+              <span>Текущий алгоритм:</span>
+              <span id="current-algo">Пошаговый</span>
+            </div>
+            <div class="stat-item">
+              <span>Время выполнения:</span>
+              <span id="execution-time">0 мс</span>
+            </div>
+            <div class="stat-item">
+              <span>Построено пикселей:</span>
+              <span id="pixels-count">0</span>
+            </div>
+            <div class="stat-item">
+              <span>Коэффициент сглаживания:</span>
+              <span id="antialiasing-factor">Нет</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="additional-info">
+      <div class="info-box">
+        <h3>Описание алгоритмов</h3>
+        <p><strong>Пошаговый алгоритм:</strong> Простейший алгоритм для рисования отрезков, вычисляет точки на основе уравнения прямой y = kx + b.</p>
+        <p><strong>Алгоритм ЦДА (Цифровой Дифференциальный Анализатор):</strong> Использует приращения для вычисления каждой следующей точки отрезка.</p>
+        <p><strong>Алгоритм Брезенхема (линия):</strong> Эффективный алгоритм, использующий только целочисленные операции для растеризации отрезков.</p>
+        <p><strong>Алгоритм Брезенхема (окружность):</strong> Адаптация алгоритма Брезенхема для рисования окружностей, использует симметрию.</p>
+        <p><strong>Алгоритм Кастла-Питвея:</strong> Рекурсивный алгоритм построения кривых Безье путем разделения контрольного многоугольника.</p>
+        <p><strong>Алгоритм Ву (сглаживание):</strong> Алгоритм сглаживания линий с использованием антиалиасинга для устранения "лестничного эффекта".</p>
+
+        <div class="color-legend">
+          <div class="color-item">
+            <div class="color-box" style="background-color: #4cc9f0;"></div>
+            <span>Основная линия</span>
+          </div>
+          <div class="color-item">
+            <div class="color-box" style="background-color: #f72585;"></div>
+            <span>Начальная/конечная точки</span>
+          </div>
+          <div class="color-item">
+            <div class="color-box" style="background-color: #72efdd;"></div>
+            <span>Контрольные точки (кривые)</span>
+          </div>
+          <div class="color-item">
+            <div class="color-box" style="background-color: #4a4e69;"></div>
+            <span>Сетка и оси</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <h3>Система координат</h3>
+        <p>Центр координат (0,0) находится в центре холста. Ось X направлена вправо, ось Y - вверх.</p>
+        <p>Целочисленные координаты привязаны к узлам сетки, что соответствует дискретному пространству растра.</p>
+        <p>Каждая единица координат отображается с масштабом, который можно изменять (по умолчанию 10px на единицу).</p>
+        <p>Алгоритмы работают в целочисленных координатах, а затем преобразуются в координаты холста с учетом масштаба.</p>
+
+        <div class="keyboard-shortcuts">
+          <p><strong>Горячие клавиши:</strong>
+            <span class="shortcut">1-6</span> - выбор алгоритма,
+            <span class="shortcut">Space</span> - построить,
+            <span class="shortcut">C</span> - очистить
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <p>Лабораторная работа по компьютерной графике. Базовые растровые алгоритмы.</p>
+      <p>Выполнил: студент группы 12/13. Все алгоритмы реализованы на JavaScript.</p>
+    </footer>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const algorithmBtns = document.querySelectorAll('.algorithm-btn');
+    const drawBtn = document.getElementById('draw-btn');
+    const clearBtn = document.getElementById('clear-btn');
+    const scaleSlider = document.getElementById('scale');
+    const scaleValue = document.getElementById('scale-value');
+    const gridSlider = document.getElementById('grid-size');
+    const gridValue = document.getElementById('grid-value');
+    const stepsContainer = document.getElementById('steps-container');
+    const performanceStats = document.getElementById('performance-stats');
+    const currentAlgoSpan = document.getElementById('current-algo');
+    const executionTimeSpan = document.getElementById('execution-time');
+    const pixelsCountSpan = document.getElementById('pixels-count');
+    const x1Input = document.getElementById('x1');
+    const y1Input = document.getElementById('y1');
+    const x2Input = document.getElementById('x2');
+    const y2Input = document.getElementById('y2');
+    const radiusInput = document.getElementById('radius');
+    const curvePointsSelect = document.getElementById('curve-points');
+    let scale = parseInt(scaleSlider.value);
+    let gridSize = parseInt(gridSlider.value);
+    let currentAlgorithm = 'step';
+    let controlPoints = [];
+    let isDrawing = false;
+    function init() {
+      drawGridAndAxes();
+      setupEventListeners();
+      updateInputsForAlgorithm();
+      drawExample();
+      document.addEventListener('keydown', (e) => {
+        if (e.key >= '1' && e.key <= '6') {
+          const index = parseInt(e.key) - 1;
+          if (index < algorithmBtns.length) {
+            algorithmBtns[index].click();
+          }
+        } else if (e.key === ' ') {
+          e.preventDefault();
+          drawBtn.click();
+        } else if (e.key.toLowerCase() === 'c') {
+          clearBtn.click();
+        }
+      });
+    }
+    function setupEventListeners() {
+      algorithmBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          algorithmBtns.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentAlgorithm = btn.dataset.algorithm;
+          currentAlgoSpan.textContent = btn.textContent;
+          updateInputsForAlgorithm();
+          drawGridAndAxes();
+        });
+      });
+      drawBtn.addEventListener('click', () => {
+        drawWithAlgorithm();
+      });
+      clearBtn.addEventListener('click', () => {
+        clearCanvas();
+        drawGridAndAxes();
+        stepsContainer.innerHTML = '<div class="step-item">Выберите алгоритм и нажмите "Построить"</div>';
+        executionTimeSpan.textContent = '0 мс';
+        pixelsCountSpan.textContent = '0';
+      });
+      scaleSlider.addEventListener('input', () => {
+        scale = parseInt(scaleSlider.value);
+        scaleValue.textContent = scale;
+        drawGridAndAxes();
+        if (isDrawing) drawWithAlgorithm();
+      });
+      gridSlider.addEventListener('input', () => {
+        gridSize = parseInt(gridSlider.value);
+        gridValue.textContent = gridSize;
+        drawGridAndAxes();
+        if (isDrawing) drawWithAlgorithm();
+      });
+      canvas.addEventListener('click', (e) => {
+        if (currentAlgorithm === 'castle-pitway') {
+          const rect = canvas.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          const logicalX = Math.round((x - canvas.width / 2) / scale);
+          const logicalY = Math.round((canvas.height / 2 - y) / scale);
+          controlPoints.push({
+            x: logicalX,
+            y: logicalY
+          });
+          const maxPoints = parseInt(curvePointsSelect.value);
+          if (controlPoints.length > maxPoints) {
+            controlPoints.shift();
+          }
+          drawGridAndAxes();
+          drawControlPoints();
+          if (controlPoints.length >= 2) {
+            drawWithAlgorithm();
+          }
+        }
+      });
+    }
+    function updateInputsForAlgorithm() {
+      const isCircle = currentAlgorithm === 'bresenham-circle';
+      const isCurve = currentAlgorithm === 'castle-pitway';
+      x1Input.disabled = isCurve;
+      y1Input.disabled = isCurve;
+      x2Input.disabled = isCurve;
+      y2Input.disabled = isCurve;
+      radiusInput.disabled = !isCircle;
+      curvePointsSelect.disabled = !isCurve;
+      if (isCurve) {
+        controlPoints = [];
+        x1Input.placeholder = "не используется";
+        y1Input.placeholder = "не используется";
+        x2Input.placeholder = "не используется";
+        y2Input.placeholder = "не используется";
+      } else {
+        x1Input.placeholder = "";
+        y1Input.placeholder = "";
+        x2Input.placeholder = "";
+        y2Input.placeholder = "";
+      }
+    }
+    function drawGridAndAxes() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const gridStep = gridSize * scale;
+      ctx.strokeStyle = '#2a2d44';
+      ctx.lineWidth = 1;
+      for (let x = centerX % gridStep; x < canvas.width; x += gridStep) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+      }
+      for (let y = centerY % gridStep; y < canvas.height; y += gridStep) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+      ctx.strokeStyle = '#4a4e69';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, centerY);
+      ctx.lineTo(canvas.width, centerY);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(centerX, 0);
+      ctx.lineTo(centerX, canvas.height);
+      ctx.stroke();
+      ctx.fillStyle = '#4a4e69';
+      ctx.beginPath();
+      ctx.moveTo(canvas.width - 10, centerY - 5);
+      ctx.lineTo(canvas.width, centerY);
+      ctx.lineTo(canvas.width - 10, centerY + 5);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(centerX - 5, 10);
+      ctx.lineTo(centerX, 0);
+      ctx.lineTo(centerX + 5, 10);
+      ctx.fill();
+      ctx.font = '14px Arial';
+      ctx.fillStyle = '#72efdd';
+      ctx.fillText('X', canvas.width - 15, centerY - 10);
+      ctx.fillText('Y', centerX + 10, 15);
+      ctx.font = '12px Arial';
+      ctx.fillStyle = '#6c7285';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      for (let i = gridSize; i <= canvas.width / 2 / scale; i += gridSize) {
+        if (i !== 0) {
+          const xPos = centerX + i * scale;
+          ctx.fillText(i.toString(), xPos, centerY + 5);
+          ctx.fillText((-i).toString(), centerX - i * scale, centerY + 5);
+        }
+      }
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      for (let i = gridSize; i <= canvas.height / 2 / scale; i += gridSize) {
+        if (i !== 0) {
+          const yPos = centerY - i * scale;
+          ctx.fillText(i.toString(), centerX - 5, yPos);
+          ctx.fillText((-i).toString(), centerX - 5, centerY + i * scale);
+        }
+      }
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'top';
+      ctx.fillText('0', centerX - 5, centerY + 5);
+      ctx.fillStyle = '#f72585';
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    function drawControlPoints() {
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      ctx.fillStyle = '#72efdd';
+      controlPoints.forEach(point => {
+        const x = centerX + point.x * scale;
+        const y = centerY - point.y * scale;
+        ctx.beginPath();
+        ctx.arc(x, y, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'white';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText((controlPoints.indexOf(point) + 1).toString(), x, y);
+        ctx.fillStyle = '#72efdd';
+      });
+    }
+    function logicalToCanvas(x, y) {
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      return {
+        x: centerX + x * scale,
+        y: centerY - y * scale
+      };
+    }
+    function drawPixel(x, y, color = '#4cc9f0', size = scale) {
+      const pos = logicalToCanvas(x, y);
+      ctx.fillStyle = color;
+      ctx.fillRect(pos.x - size / 2, pos.y - size / 2, size, size);
+    }
+    function drawPixelWithAlpha(x, y, alpha, color = '#4cc9f0') {
+      const pos = logicalToCanvas(x, y);
+      const prevAlpha = ctx.globalAlpha;
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = color;
+      ctx.fillRect(pos.x - scale / 2, pos.y - scale / 2, scale, scale);
+      ctx.globalAlpha = prevAlpha;
+    }
+    function clearCanvas() {
+      isDrawing = false;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    function drawExample() {
+      const x1 = -50,
+        y1 = 30,
+        x2 = 70,
+        y2 = -40;
+      x1Input.value = x1;
+      y1Input.value = y1;
+      x2Input.value = x2;
+      y2Input.value = y2;
+      drawWithAlgorithm();
+    }
+    function drawWithAlgorithm() {
+      isDrawing = true;
+      drawGridAndAxes();
+      let startTime, endTime;
+      let steps = [];
+      let pixelCount = 0;
+      const x1 = parseInt(x1Input.value);
+      const y1 = parseInt(y1Input.value);
+      const x2 = parseInt(x2Input.value);
+      const y2 = parseInt(y2Input.value);
+      const radius = parseInt(radiusInput.value);
+      switch (currentAlgorithm) {
+        case 'step':
+          startTime = performance.now();
+          pixelCount = stepAlgorithm(x1, y1, x2, y2, steps);
+          endTime = performance.now();
+          break;
+        case 'dda':
+          startTime = performance.now();
+          pixelCount = ddaAlgorithm(x1, y1, x2, y2, steps);
+          endTime = performance.now();
+          break;
+        case 'bresenham':
+          startTime = performance.now();
+          pixelCount = bresenhamLine(x1, y1, x2, y2, steps);
+          endTime = performance.now();
+          break;
+        case 'bresenham-circle':
+          startTime = performance.now();
+          pixelCount = bresenhamCircle(x2, y2, radius, steps);
+          endTime = performance.now();
+          break;
+        case 'castle-pitway':
+          startTime = performance.now();
+          if (controlPoints.length >= 2) {
+            pixelCount = castlePitwayAlgorithm(steps);
+          } else {
+            steps.push("Кликните на холсте, чтобы добавить контрольные точки кривой");
+          }
+          endTime = performance.now();
+          break;
+        case 'wu':
+          startTime = performance.now();
+          pixelCount = wuAlgorithm(x1, y1, x2, y2, steps);
+          endTime = performance.now();
+          break;
+      }
+      if (currentAlgorithm === 'castle-pitway') {
+        drawControlPoints();
+      }
+      if (currentAlgorithm !== 'castle-pitway' && currentAlgorithm !== 'bresenham-circle') {
+        const startPos = logicalToCanvas(x1, y1);
+        const endPos = logicalToCanvas(x2, y2);
+        ctx.fillStyle = '#f72585';
+        ctx.beginPath();
+        ctx.arc(startPos.x, startPos.y, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(endPos.x, endPos.y, 6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      displaySteps(steps);
+      updatePerformanceStats(startTime, endTime, pixelCount);
+    }
+    function stepAlgorithm(x1, y1, x2, y2, steps) {
+      steps.push("Пошаговый алгоритм");
+      steps.push(`Начальная точка: (${x1}, ${y1})`);
+      steps.push(`Конечная точка: (${x2}, ${y2})`);
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      steps.push(`dx = ${dx}, dy = ${dy}`);
+      if (Math.abs(dx) > Math.abs(dy)) {
+        steps.push("|dx| > |dy|, используем итерацию по X");
+        if (dx === 0) {
+          drawPixel(x1, y1);
+          steps.push("dx = 0, рисуем точку");
+          return 1;
+        }
+        const k = dy / dx;
+        const b = y1 - k * x1;
+        steps.push(`Уравнение прямой: y = ${k.toFixed(2)} * x + ${b.toFixed(2)}`);
+        const step = dx > 0 ? 1 : -1;
+        let x = x1;
+        let pixelCount = 0;
+        while (Math.abs(x - x2) > 0) {
+          const y = Math.round(k * x + b);
+          drawPixel(x, y);
+          steps.push(`x=${x}, y=${k * x + b}=${y}`);
+          x += step;
+          pixelCount++;
+        }
+        const y = Math.round(k * x2 + b);
+        drawPixel(x2, y);
+        pixelCount++;
+        return pixelCount;
+      } else {
+        steps.push("|dy| >= |dx|, используем итерацию по Y");
+        if (dy === 0) {
+          drawPixel(x1, y1);
+          steps.push("dy = 0, рисуем точку");
+          return 1;
+        }
+        const k = dx / dy;
+        const b = x1 - k * y1;
+        steps.push(`Уравнение прямой: x = ${k.toFixed(2)} * y + ${b.toFixed(2)}`);
+        const step = dy > 0 ? 1 : -1;
+        let y = y1;
+        let pixelCount = 0;
+        while (Math.abs(y - y2) > 0) {
+          const x = Math.round(k * y + b);
+          drawPixel(x, y);
+          steps.push(`y=${y}, x=${k * y + b}=${x}`);
+          y += step;
+          pixelCount++;
+        }
+        const x = Math.round(k * y2 + b);
+        drawPixel(x, y2);
+        pixelCount++;
+        return pixelCount;
+      }
+    }
+    function ddaAlgorithm(x1, y1, x2, y2, steps) {
+      steps.push("Алгоритм ЦДА (Digital Differential Analyzer)");
+      steps.push(`Начальная точка: (${x1}, ${y1})`);
+      steps.push(`Конечная точка: (${x2}, ${y2})`);
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      if (dx === 0 && dy === 0) {
+        drawPixel(x1, y1);
+        steps.push("dx = 0, dy = 0, рисуем точку");
+        return 1;
+      }
+      const stepsCount = Math.max(Math.abs(dx), Math.abs(dy));
+      steps.push(`dx = ${dx}, dy = ${dy}, steps = ${stepsCount}`);
+      const xIncrement = dx / stepsCount;
+      const yIncrement = dy / stepsCount;
+      steps.push(`Приращение X: ${xIncrement.toFixed(2)}`);
+      steps.push(`Приращение Y: ${yIncrement.toFixed(2)}`);
+      let x = x1;
+      let y = y1;
+      let pixelCount = 0;
+      drawPixel(Math.round(x), Math.round(y));
+      steps.push(`Шаг 0: x=${x.toFixed(2)}, y=${y.toFixed(2)} -> (${Math.round(x)}, ${Math.round(y)})`);
+      pixelCount++;
+      for (let i = 1; i <= stepsCount; i++) {
+        x += xIncrement;
+        y += yIncrement;
+        const roundedX = Math.round(x);
+        const roundedY = Math.round(y);
+        drawPixel(roundedX, roundedY);
+        if (i <= 10) { 
+          steps.push(`Шаг ${i}: x=${x.toFixed(2)}, y=${y.toFixed(2)} -> (${roundedX}, ${roundedY})`);
+        }
+        pixelCount++;
+      }
+      return pixelCount;
+    }
+    function bresenhamLine(x1, y1, x2, y2, steps) {
+      steps.push("Алгоритм Брезенхема (линия)");
+      steps.push(`Начальная точка: (${x1}, ${y1})`);
+      steps.push(`Конечная точка: (${x2}, ${y2})`);
+      if (x1 === x2 && y1 === y2) {
+        drawPixel(x1, y1);
+        steps.push("Точки совпадают, рисуем точку");
+        return 1;
+      }
+      const dx = Math.abs(x2 - x1);
+      const dy = Math.abs(y2 - y1);
+      const sx = x1 < x2 ? 1 : -1;
+      const sy = y1 < y2 ? 1 : -1;
+      steps.push(`dx = ${dx}, dy = ${dy}, sx = ${sx}, sy = ${sy}`);
+      let err = dx - dy;
+      let x = x1;
+      let y = y1;
+      let pixelCount = 0;
+      let stepNum = 0;
+      drawPixel(x, y);
+      steps.push(`Шаг ${stepNum}: x=${x}, y=${y}, err=${err}`);
+      pixelCount++;
+      while (x !== x2 || y !== y2) {
+        stepNum++;
+        const err2 = err * 2;
+        if (err2 > -dy) {
+          err -= dy;
+          x += sx;
+        }
+        if (err2 < dx) {
+          err += dx;
+          y += sy;
+        }
+        drawPixel(x, y);
+        if (stepNum <= 10) { // Ограничим вывод шагов
+          steps.push(`Шаг ${stepNum}: x=${x}, y=${y}, err=${err}`);
+        }
+        pixelCount++;
+      }
+      return pixelCount;
+    }
+    function bresenhamCircle(cx, cy, radius, steps) {
+      steps.push("Алгоритм Брезенхема (окружность)");
+      steps.push(`Центр: (${cx}, ${cy}), Радиус: ${radius}`);
+      if (radius <= 0) {
+        drawPixel(cx, cy);
+        steps.push("Радиус <= 0, рисуем точку");
+        return 1;
+      }
+      let x = 0;
+      let y = radius;
+      let d = 3 - 2 * radius;
+      let pixelCount = 0;
+      let stepNum = 0;
+      steps.push(`Инициализация: x=${x}, y=${y}, d=${d}`);
+      const drawCirclePoints = (cx, cy, x, y) => {
+        drawPixel(cx + x, cy + y);
+        drawPixel(cx - x, cy + y);
+        drawPixel(cx + x, cy - y);
+        drawPixel(cx - x, cy - y);
+        drawPixel(cx + y, cy + x);
+        drawPixel(cx - y, cy + x);
+        drawPixel(cx + y, cy - x);
+        drawPixel(cx - y, cy - x);
+      };
+      drawCirclePoints(cx, cy, x, y);
+      pixelCount += 8;
+      while (y >= x) {
+        stepNum++;
+        x++;
+        if (d > 0) {
+          y--;
+          d = d + 4 * (x - y) + 10;
+        } else {
+          d = d + 4 * x + 6;
+        }
+        drawCirclePoints(cx, cy, x, y);
+        pixelCount += 8;
+        if (stepNum <= 5) {
+          steps.push(`Шаг ${stepNum}: x=${x}, y=${y}, d=${d}`);
+        }
+      }
+      return pixelCount;
+    }
+    function castlePitwayAlgorithm(steps) {
+      steps.push("Алгоритм Кастла-Питвея (де Кастельжо)");
+      if (controlPoints.length < 2) {
+        steps.push("Недостаточно контрольных точек");
+        return 0;
+      }
+      steps.push(`Контрольные точки: ${controlPoints.map((p, i) => `
+        P$ {
+          i
+        }($ {
+          p.x
+        }, $ {
+          p.y
+        })
+        `).join(', ')}`);
+      const bezierPoint = (t, points) => {
+        if (points.length === 1) {
+          return points[0];
+        }
+        const newPoints = [];
+        for (let i = 0; i < points.length - 1; i++) {
+          const x = points[i].x + t * (points[i + 1].x - points[i].x);
+          const y = points[i].y + t * (points[i + 1].y - points[i].y);
+          newPoints.push({
+            x,
+            y
+          });
+        }
+        return bezierPoint(t, newPoints);
+      };
+      const curvePoints = [];
+      const iterations = 50; 
+      for (let i = 0; i <= iterations; i++) {
+        const t = i / iterations;
+        const point = bezierPoint(t, controlPoints);
+        curvePoints.push({
+          x: Math.round(point.x),
+          y: Math.round(point.y)
+        });
+      }
+      let pixelCount = 0;
+      for (let i = 0; i < curvePoints.length - 1; i++) {
+        const p1 = curvePoints[i];
+        const p2 = curvePoints[i + 1];
+        const dx = Math.abs(p2.x - p1.x);
+        const dy = Math.abs(p2.y - p1.y);
+        const sx = p1.x < p2.x ? 1 : -1;
+        const sy = p1.y < p2.y ? 1 : -1;
+        let err = dx - dy;
+        let x = p1.x;
+        let y = p1.y;
+        while (true) {
+          drawPixel(x, y, '#4cc9f0');
+          pixelCount++;
+          if (x === p2.x && y === p2.y) break;
+          const err2 = err * 2;
+          if (err2 > -dy) {
+            err -= dy;
+            x += sx;
+          }
+          if (err2 < dx) {
+            err += dx;
+            y += sy;
+          }
+        }
+      }
+      ctx.strokeStyle = '#72efdd';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([5, 3]);
+      ctx.beginPath();
+      const firstPoint = logicalToCanvas(controlPoints[0].x, controlPoints[0].y);
+      ctx.moveTo(firstPoint.x, firstPoint.y);
+      for (let i = 1; i < controlPoints.length; i++) {
+        const point = logicalToCanvas(controlPoints[i].x, controlPoints[i].y);
+        ctx.lineTo(point.x, point.y);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+      steps.push(`Построено ${curvePoints.length} точек кривой`);
+      return pixelCount;
+    }
+
+    function wuAlgorithm(x1, y1, x2, y2, steps) {
+      steps.push("Алгоритм Ву (сглаживание)");
+      steps.push(`Начальная точка: (${x1}, ${y1})`);
+      steps.push(`Конечная точка: (${x2}, ${y2})`);
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      steps.push(`dx = ${dx}, dy = ${dy}`);
+      if (dx === 0 && dy === 0) {
+        drawPixelWithAlpha(x1, y1, 1);
+        steps.push("dx = 0, dy = 0, рисуем точку");
+        return 1;
+      }
+      let pixelCount = 0;
+      if (Math.abs(dx) > Math.abs(dy)) {
+        steps.push("|dx| > |dy|, итерация по X");
+        if (x2 < x1) {
+          [x1, x2] = [x2, x1];
+          [y1, y2] = [y2, y1];
+        }
+        const gradient = dy / dx;
+        let y = y1;
+        drawPixelWithAlpha(x1, Math.floor(y), 1 - (y - Math.floor(y)));
+        drawPixelWithAlpha(x1, Math.floor(y) + 1, y - Math.floor(y));
+        pixelCount += 2;
+        for (let x = x1 + 1; x < x2; x++) {
+          y += gradient;
+          const yInt = Math.floor(y);
+          const frac = y - yInt;
+          drawPixelWithAlpha(x, yInt, 1 - frac);
+          drawPixelWithAlpha(x, yInt + 1, frac);
+          pixelCount += 2;
+        }
+        y = y2;
+        drawPixelWithAlpha(x2, Math.floor(y), 1 - (y - Math.floor(y)));
+        drawPixelWithAlpha(x2, Math.floor(y) + 1, y - Math.floor(y));
+        pixelCount += 2;
+      } else {
+        steps.push("|dy| >= |dx|, итерация по Y");
+        if (y2 < y1) {
+          [x1, x2] = [x2, x1];
+          [y1, y2] = [y2, y1];
+        }
+        const gradient = dx / dy;
+        let x = x1;
+        drawPixelWithAlpha(Math.floor(x), y1, 1 - (x - Math.floor(x)));
+        drawPixelWithAlpha(Math.floor(x) + 1, y1, x - Math.floor(x));
+        pixelCount += 2;
+        for (let y = y1 + 1; y < y2; y++) {
+          x += gradient;
+          const xInt = Math.floor(x);
+          const frac = x - xInt;
+          drawPixelWithAlpha(xInt, y, 1 - frac);
+          drawPixelWithAlpha(xInt + 1, y, frac);
+          pixelCount += 2;
+        }
+        x = x2;
+        drawPixelWithAlpha(Math.floor(x), y2, 1 - (x - Math.floor(x)));
+        drawPixelWithAlpha(Math.floor(x) + 1, y2, x - Math.floor(x));
+        pixelCount += 2;
+      }
+      steps.push(`Сглаживание: каждый пиксель рисуется с учетом прозрачности`);
+      return pixelCount;
+    }
+
+    function displaySteps(steps) {
+      stepsContainer.innerHTML = '';
+      const maxSteps = 15;
+      const displaySteps = steps.length > maxSteps ? [...steps.slice(0, maxSteps), `... и еще ${steps.length - maxSteps} шагов`] : steps;
+      displaySteps.forEach(step => {
+        const stepElement = document.createElement('div');
+        stepElement.className = 'step-item';
+        stepElement.textContent = step;
+        stepsContainer.appendChild(stepElement);
+      });
+    }
+
+    function updatePerformanceStats(startTime, endTime, pixelCount) {
+      const executionTime = endTime - startTime;
+      executionTimeSpan.textContent = `${executionTime.toFixed(2)} мс`;
+      pixelsCountSpan.textContent = pixelCount;
+      const antialiasingFactor = document.getElementById('antialiasing-factor');
+      antialiasingFactor.textContent = currentAlgorithm === 'wu' ? 'Да (алгоритм Ву)' : 'Нет';
+    }
+    window.onload = init;
+  </script>
+</body>
+
+</html>
